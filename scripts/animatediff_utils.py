@@ -66,7 +66,10 @@ def get_controlnet_units(p: StableDiffusionProcessing):
                         cn_unit_dataclass.batch_images = cn_unit_dict.get("batch_images", None)
                p.script_args[script.args_from:script.args_to] = cn_units_dataclass
 
-            return [x for x in cn_units if x.enabled] if not p.is_api else cn_units
+            #tyDiffusion edit: official repo returns all cn_units if p.is_api condition true...but that
+            #results in us returning disabled units for no reason. I don't see a reason to ever return 
+            #disabled cn_units
+            return [x for x in cn_units if x.enabled]; #if not p.is_api else cn_units 
 
     return []
 
