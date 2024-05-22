@@ -92,8 +92,7 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
-            if params.prompt_scheduler: #tyDiffusion edit: prompt_scheduler can be None here
-                params.prompt_scheduler.save_infotext_txt(res)
+            #params.prompt_scheduler.save_infotext_txt(res) #tyDiffusion edit: this is generating errors because prompt_scheduler is NoneType
             motion_module.restore(p.sd_model)
             self.hacked = False
             #AnimateDiffOutput().output(p, res, params) #tyDiffusion edit: don't do this...we process the images using the API ourselves
