@@ -51,6 +51,7 @@ class AnimateDiffScript(scripts.Script):
 
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
+                
         if p.is_api:
             params = get_animatediff_arg(p)
         motion_module.set_ad_params(params)
@@ -58,7 +59,7 @@ class AnimateDiffScript(scripts.Script):
         # apply XYZ settings
         params.apply_xyz()
         xyz_attrs.clear()
-
+        
         if params.enable:
             logger.info("AnimateDiff process start.")
             motion_module.inject(p.sd_model, params.model)
@@ -91,10 +92,11 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
-            params.prompt_scheduler.save_infotext_txt(res)
+            if params.prompt_scheduler: #tyDiffusion edit: prompt_scheduler can be None here
+                params.prompt_scheduler.save_infotext_txt(res)
             motion_module.restore(p.sd_model)
             self.hacked = False
-            AnimateDiffOutput().output(p, res, params)
+            #AnimateDiffOutput().output(p, res, params) #tyDiffusion edit: don't do this...we process the images using the API ourselves
             logger.info("AnimateDiff process end.")
 
 
