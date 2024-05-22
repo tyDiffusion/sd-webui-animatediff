@@ -59,8 +59,7 @@ def get_controlnet_units(p: StableDiffusionProcessing):
             if p.is_api and len(cn_units) > 0 and isinstance(cn_units[0], dict):
                from scripts import external_code
                from scripts.batch_hijack import InputMode
-               cn_units_dataclass = external_code.get_all_units_in_processing(p)         
-               print (len(cn_units))
+               cn_units_dataclass = external_code.get_all_units_in_processing(p) 
                for cn_unit_dict, cn_unit_dataclass in zip(cn_units, cn_units_dataclass):                                                            
                     #tyDiffusion edit: check if cn_unit is dict...empty/unfilled controlnets will not be dicts!
                     if isinstance(cn_unit_dict, dict) and cn_unit_dataclass.image is None:
@@ -111,8 +110,6 @@ def cv2_extract_frames(source_video: str, output_dir: str):
 
 
 def extract_frames_from_video(params):
-    print("DEBUG: video source...")
-    print (params.video_source)
     assert params.video_source, "You need to specify cond hint for ControlNet."
     params.video_path = shared.opts.data.get(
         "animatediff_frame_extract_path",
