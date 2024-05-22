@@ -52,19 +52,22 @@ def get_controlnet_units(p: StableDiffusionProcessing):
     if not p.scripts:
         return []
 
+       
     for script in p.scripts.alwayson_scripts:
-        if script.title().lower() == "controlnet":
-            cn_units = p.script_args[script.args_from:script.args_to]
-
+        if script.title().lower() == "controlnet":            
+            cn_units = p.script_args[script.args_from:script.args_to]  
             if p.is_api and len(cn_units) > 0 and isinstance(cn_units[0], dict):
                from scripts import external_code
                from scripts.batch_hijack import InputMode
-               cn_units_dataclass = external_code.get_all_units_in_processing(p)
-               for cn_unit_dict, cn_unit_dataclass in zip(cn_units, cn_units_dataclass):
-                    if cn_unit_dataclass.image is None:
+               cn_units_dataclass = external_code.get_all_units_in_processing(p)         
+               print (len(cn_units))
+               for cn_unit_dict, cn_unit_dataclass in zip(cn_units, cn_units_dataclass):                                                            
+                    #tyDiffusion edit: check if cn_unit is dict...empty/unfilled controlnets will not be dicts!
+                    if isinstance(cn_unit_dict, dict) and cn_unit_dataclass.image is None:
                         cn_unit_dataclass.input_mode = InputMode.BATCH
                         cn_unit_dataclass.batch_images = cn_unit_dict.get("batch_images", None)
                p.script_args[script.args_from:script.args_to] = cn_units_dataclass
+               cn_units = cn_units_dataclass #tyDiffusion edit: assign ControlNetUnit objects to replace dicts
 
             #tyDiffusion edit: official repo returns all cn_units if p.is_api condition true...but that
             #results in us returning disabled units for no reason. I don't see a reason to ever return 
@@ -108,6 +111,8 @@ def cv2_extract_frames(source_video: str, output_dir: str):
 
 
 def extract_frames_from_video(params):
+    print("DEBUG: video source...")
+    print (params.video_source)
     assert params.video_source, "You need to specify cond hint for ControlNet."
     params.video_path = shared.opts.data.get(
         "animatediff_frame_extract_path",
