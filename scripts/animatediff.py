@@ -82,7 +82,8 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
         if params.enable:
-            params.prompt_scheduler.save_infotext_img(p)
+            if params.prompt_scheduler:
+                params.prompt_scheduler.save_infotext_img(p)
 
 
     def postprocess_image(self, p: StableDiffusionProcessing, pp: PostprocessImageArgs, params: AnimateDiffProcess, *args):
@@ -92,7 +93,8 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
-            #params.prompt_scheduler.save_infotext_txt(res) #tyDiffusion edit: this is generating errors because prompt_scheduler is NoneType
+            if params.prompt_scheduler:            
+                params.prompt_scheduler.save_infotext_txt(res)
             motion_module.restore(p.sd_model)
             self.hacked = False
             #AnimateDiffOutput().output(p, res, params) #tyDiffusion edit: don't do this...we process the images using the API ourselves

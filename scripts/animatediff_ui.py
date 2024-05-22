@@ -168,7 +168,7 @@ class AnimateDiffProcess:
             self.overlap = self.batch_size // 4
         if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", True):
             p.do_not_save_samples = True
-
+                
         cn_units = get_controlnet_units(p)
         min_batch_in_cn = -1
         for cn_unit in cn_units:
@@ -176,6 +176,7 @@ class AnimateDiffProcess:
             if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
                (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_images) or \
                (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
+                
                 if not self.video_path:
                     extract_frames_from_video(self)
                 cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
@@ -186,7 +187,9 @@ class AnimateDiffProcess:
                 cn_unit.batch_mask_dir = self.mask_path
 
             # find minimun control images in CN batch
-            cn_unit_batch_params = cn_unit.batch_images.split('\n')
+            cn_unit_batch_params = "" #tyDiffusion edit: check if batch_images is not NoneType to avoid errors
+            if cn_unit.batch_images:
+                cn_unit_batch_params = cn_unit.batch_images.split('\n')
             if cn_unit.input_mode.name == 'BATCH':
                 cn_unit.animatediff_batch = True # for A1111 sd-webui-controlnet
                 if not any([cn_param.startswith("keyframe:") for cn_param in cn_unit_batch_params[1:]]):
