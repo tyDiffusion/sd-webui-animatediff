@@ -24,7 +24,9 @@ class AnimateDiffOutput:
         logger.info(f"Saving output formats: {', '.join(params.format)}")
         date = datetime.datetime.now().strftime('%Y-%m-%d')
         output_dir = Path(f"{p.outpath_samples}/AnimateDiff/{date}")
-        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        #tyDiffusion edit: don't create intermediate folder, because we never save intermediate images
+        #output_dir.mkdir(parents=True, exist_ok=True) 
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
         for i in range(res.index_of_first_image, len(res.images), step):
             if i-res.index_of_first_image >= len(res.all_seeds): break
@@ -157,13 +159,15 @@ class AnimateDiffOutput:
         infotext = res.infotexts[index]
         s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
-        if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", True) or getattr(params, "force_save_to_custom", False)):
-            video_path_prefix.mkdir(exist_ok=True, parents=True)
-            for i, frame in enumerate(frame_list):
-                png_filename = video_path_prefix/f"{i:05}.png"
-                png_info = PngImagePlugin.PngInfo()
-                png_info.add_text('parameters', infotext)
-                imageio.imwrite(png_filename, frame, pnginfo=png_info)
+        
+        #tyDiffusion edit: don't save intermediate images ever
+        #if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", True) or getattr(params, "force_save_to_custom", False)):
+        #    video_path_prefix.mkdir(exist_ok=True, parents=True)
+        #    for i, frame in enumerate(frame_list):
+        #        png_filename = video_path_prefix/f"{i:05}.png"
+        #        png_info = PngImagePlugin.PngInfo()
+        #        png_info.add_text('parameters', infotext)
+        #        imageio.imwrite(png_filename, frame, pnginfo=png_info)
 
         if "GIF" in params.format:
             video_path_gif = str(video_path_prefix) + ".gif"
