@@ -31,7 +31,9 @@ class AnimateDiffMM:
 
 
     def get_model_dir(self):
-        model_dir = shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model"))
+        model_dir = getattr(shared.cmd_opts, 'animatediff_model_path', None)
+        if not model_dir:
+            model_dir = shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model"))
         if not model_dir:
             model_dir = os.path.join(self.script_dir, "model")
         return model_dir
