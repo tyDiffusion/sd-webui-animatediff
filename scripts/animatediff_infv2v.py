@@ -124,7 +124,7 @@ class AnimateDiffInfV2V:
                                 control.hr_hint_cond = control.hr_hint_cond.to(device=devices.get_device_for("controlnet"))
                         # IPAdapter and Controlllite are always on CPU.
                         elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.cond_emb.shape[0] > len(context):
-                            from scripts.controlmodel_ipadapter import ImageEmbed
+                            from scripts.ipadapter.plugable_ipadapter import ImageEmbed
                             if getattr(control.control_model.image_emb, "cond_emb_backup", None) is None:
                                 control.control_model.cond_emb_backup = control.control_model.image_emb.cond_emb
                             control.control_model.image_emb = ImageEmbed(control.control_model.cond_emb_backup[context], control.control_model.image_emb.uncond_emb)
