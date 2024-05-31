@@ -9,6 +9,7 @@ from modules.script_callbacks import CFGDenoiserParams
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
 
+contextCount = 0
 
 class AnimateDiffInfV2V:
 
@@ -51,6 +52,7 @@ class AnimateDiffInfV2V:
                 int(AnimateDiffInfV2V.ordered_halving(step) * context_step) + pad,
                 video_length + pad + (0 if closed_loop else -overlap),
                 (batch_size * context_step - overlap),
+                
             ):
                 if loop_setting == 'N' and context_step == 1:
                     current_context = [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
@@ -112,6 +114,9 @@ class AnimateDiffInfV2V:
                 if cn_script and cn_script.latest_network:
                     from scripts.hook import ControlModelType
                     for control in cn_script.latest_network.control_params:
+                        
+                        control.control_model.contextID = context[0]                       
+                                                                            
                         if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
                             if control.hint_cond.shape[0] > len(context):
                                 control.hint_cond_backup = control.hint_cond
@@ -123,11 +128,15 @@ class AnimateDiffInfV2V:
                                     control.hr_hint_cond = control.hr_hint_cond[context]
                                 control.hr_hint_cond = control.hr_hint_cond.to(device=devices.get_device_for("controlnet"))
                         # IPAdapter and Controlllite are always on CPU.
-                        elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.cond_emb.shape[0] > len(context):
+                        elif control.control_model_type == ControlModelType.IPAdapter:# and control.control_model.image_emb.cond_emb.shape[0] > len(context):
+                           
                             from scripts.ipadapter.plugable_ipadapter import ImageEmbed
-                            if getattr(control.control_model.image_emb, "cond_emb_backup", None) is None:
-                                control.control_model.cond_emb_backup = control.control_model.image_emb.cond_emb
-                            control.control_model.image_emb = ImageEmbed(control.control_model.cond_emb_backup[context], control.control_model.image_emb.uncond_emb)
+                            
+                            if getattr(control.control_model, "cond_emb_backup", None) is None:
+                                control.control_model.cond_emb_backup = control.control_model.image_emb
+                            
+                            control.control_model.image_emb = ImageEmbed(control.control_model.cond_emb_backup.cond_emb[context], control.control_model.cond_emb_backup.uncond_emb)
+                                                        
                         elif control.control_model_type == ControlModelType.Controlllite:
                             for module in control.control_model.modules.values():
                                 if module.cond_image.shape[0] > len(context):
@@ -146,6 +155,9 @@ class AnimateDiffInfV2V:
                             if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
                                 control.hr_hint_cond_backup[context] = control.hr_hint_cond.to(device="cpu")
                                 control.hr_hint_cond = control.hr_hint_cond_backup
+                        elif control.control_model_type == ControlModelType.IPAdapter :                                                     
+                            control.control_model.image_emb = control.control_model.cond_emb_backup
+                            control.control_model.cond_emb_backup = None
                         elif control.control_model_type == ControlModelType.Controlllite:
                             for module in control.control_model.modules.values():
                                 if getattr(module, "cond_image_backup", None) is not None:
@@ -155,10 +167,12 @@ class AnimateDiffInfV2V:
                 logger.debug("Running special forward for AnimateDiff")
                 x_out = torch.zeros_like(x_in)
                 for context in AnimateDiffInfV2V.uniform(ad_params.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
+                    
                     if shared.opts.batch_cond_uncond:
                         _context = context + [c + ad_params.video_length for c in context]
                     else:
-                        _context = context
+                        _context = context 
+                    
                     mm_cn_select(_context)
                     out = self.original_forward(
                         x_in[_context], sigma_in[_context],
@@ -166,6 +180,7 @@ class AnimateDiffInfV2V:
                     x_out = x_out.to(dtype=out.dtype)
                     x_out[_context] = out
                     mm_cn_restore(_context)
+                                                
                 return x_out
 
             logger.info("inner model forward hooked")
