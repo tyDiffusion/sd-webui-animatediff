@@ -96,22 +96,28 @@ class AnimateDiffPromptSchedule:
                 break
             key_prev = p
 
+          
         dist_prev = center_frame - key_prev
         if dist_prev < 0:
             dist_prev += video_length
         dist_next = key_next - center_frame
         if dist_next < 0:
             dist_next += video_length
-
+            
+        key_prev_index = (list(self.prompt_map.keys()).index(key_prev))
+        key_next_index = (list(self.prompt_map.keys()).index(key_next))
+        
         if key_prev == key_next or dist_prev + dist_next == 0:
-            return cond[key_prev] if isinstance(cond, torch.Tensor) else {k: v[key_prev] for k, v in cond.items()}
-
+            return cond[key_prev_index] if isinstance(cond, torch.Tensor) else {k: v[key_prev_index] for k, v in cond.items()}
+   
+        
         rate = dist_prev / (dist_prev + dist_next)
+        
         if isinstance(cond, torch.Tensor):
-            return AnimateDiffPromptSchedule.slerp(cond[key_prev], cond[key_next], rate)
+            return AnimateDiffPromptSchedule.slerp(cond[key_prev_index], cond[key_next_index], rate)
         else: # isinstance(cond, dict)
             return {
-                k: AnimateDiffPromptSchedule.slerp(v[key_prev], v[key_next], rate)
+                k: AnimateDiffPromptSchedule.slerp(v[key_prev_index], v[key_next_index], rate)
                 for k, v in cond.items()
             }
     
@@ -120,6 +126,7 @@ class AnimateDiffPromptSchedule:
         if self.prompt_map is None:
             return cond
         cond_list = [] if isinstance(cond, torch.Tensor) else {k: [] for k in cond.keys()}
+       
         for i in range(cond.shape[0]):
             single_cond = self.single_cond(i, cond.shape[0], cond, closed_loop)
             if isinstance(cond, torch.Tensor):
