@@ -128,7 +128,7 @@ class AnimateDiffInfV2V:
                                     control.hr_hint_cond = control.hr_hint_cond[context]
                                 control.hr_hint_cond = control.hr_hint_cond.to(device=devices.get_device_for("controlnet"))
                         # IPAdapter and Controlllite are always on CPU.
-                        elif control.control_model_type == ControlModelType.IPAdapter:# and control.control_model.image_emb.cond_emb.shape[0] > len(context):
+                        elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.cond_emb.shape[0] > len(context):
                            
                             from scripts.ipadapter.plugable_ipadapter import ImageEmbed
                             
@@ -155,9 +155,10 @@ class AnimateDiffInfV2V:
                             if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
                                 control.hr_hint_cond_backup[context] = control.hr_hint_cond.to(device="cpu")
                                 control.hr_hint_cond = control.hr_hint_cond_backup
-                        elif control.control_model_type == ControlModelType.IPAdapter :                                                     
-                            control.control_model.image_emb = control.control_model.cond_emb_backup
-                            control.control_model.cond_emb_backup = None
+                        elif control.control_model_type == ControlModelType.IPAdapter:                                                     
+                            if getattr(control.control_model, "cond_emb_backup", None) is not None:
+                                control.control_model.image_emb = control.control_model.cond_emb_backup
+                                control.control_model.cond_emb_backup = None
                         elif control.control_model_type == ControlModelType.Controlllite:
                             for module in control.control_model.modules.values():
                                 if getattr(module, "cond_image_backup", None) is not None:
